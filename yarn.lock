@@ -5,6 +5,13 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
+"@kfang/typescript-fp@npm:^1.26.0":
+  version: 1.26.0
+  resolution: "@kfang/typescript-fp@npm:1.26.0"
+  checksum: 10c0/c850e5daa1f9907ce793309a47d5439c82ce8522a3b093f1861ae1c193c4497409b4cad9b25ca36c00b7cd1ab4a86dfdd083f2303c989bdcc7010bd2db2c4f59
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:^20.0.0":
   version: 20.16.1
   resolution: "@types/node@npm:20.16.1"
@@ -196,6 +203,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "root-workspace-0b6124@workspace:."
   dependencies:
+    "@kfang/typescript-fp": "npm:^1.26.0"
     "@types/node": "npm:^20.0.0"
     axios: "npm:^1.7.3"
     node-html-parser: "npm:^6.1.13"

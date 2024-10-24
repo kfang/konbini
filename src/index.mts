@@ -1,10 +1,14 @@
 import axios from 'axios';
 import nodeHtmlParser from 'node-html-parser';
-import { AnimeOfflineDbEntry, getAnimeOfflineDb } from './anime-offline-db.mjs';
 import path from "path";
 import fsp from "fs/promises";
 import fs from "fs";
 import { QBitorrentManager } from './qbitorrent.mjs';
+import { ManamiManager } from './manami/manami.manager.mjs';
+import { AnimeOfflineDbEntry } from './manami/manami.models.mjs';
+
+const MANAMI_CACHE_FILE = "./anime-offline-database.json";
+const MANAMI_DOWNLOAD_URL = "https://raw.githubusercontent.com/manami-project/anime-offline-database/master/anime-offline-database-minified.json";
 
 interface ISearchEntry {
     readonly anidbId: string;
@@ -76,15 +80,21 @@ async function getNyaaResults(query: string): Promise<string[]> {
 }
 
 async function main(): Promise<void> {
-    const entries = await getAnimeOfflineDb();
-    
+    const manamiManger = await ManamiManager.build({
+        downloadUrl: MANAMI_DOWNLOAD_URL,
+        cacheFilePath: MANAMI_CACHE_FILE,
+    });
+    console.log("initialized manami manager");
+
     const qb = await QBitorrentManager.build("http://localhost:8080", "admin", "adminadmin");
+    console.log("initialized qbittorrent manager");
+
     const root = "/mnt/f/Weaboo/";
 
     const hashToAnime: Record<string, AnimeOfflineDbEntry> = {};
     
     for (const search of searches) {
-        const anime = entries[search.anidbId];
+        const anime = await manamiManger.getEntryByAnidbId(search.anidbId).get();
         
         if (!anime) {
             throw new Error(`unknown anidbId: ${search.anidbId}`);

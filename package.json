@@ -6,6 +6,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "@kfang/typescript-fp": "^1.26.0",
     "axios": "^1.7.3",
     "node-html-parser": "^6.1.13"
   }
