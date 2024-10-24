@@ -13,18 +13,24 @@ export interface IManamiMangerOpts {
 export class ManamiManager {
 
     public static async build(opts: IManamiMangerOpts): Promise<ManamiManager> {
-        let db: IAnimeOfflineDb = { lastUpdate: "", data: [] };
-        
-        try {
-            const cached = await fs.readFile(opts.cacheFilePath);
-            db = JSON.parse(cached.toString());
-        } catch (e) {
-            const response = await axios.get<IAnimeOfflineDb>(opts.downloadUrl);
-            await fs.writeFile(opts.cacheFilePath, JSON.stringify(response.data));
-            db = response.data;
+        const readFromCache = () => TryAsync
+            .of(fs.readFile(opts.cacheFilePath))
+            .map((buff) => JSON.parse(buff.toString()));
+
+        const readFromDownloadUrl = () => TryAsync
+            .of(axios.get<IAnimeOfflineDb>(opts.downloadUrl))
+            .map((res) => res.data);
+
+        const writeToCache = async (animeOfflineDb: IAnimeOfflineDb) => {
+            await fs.writeFile(opts.cacheFilePath, JSON.stringify(animeOfflineDb));
+            return animeOfflineDb;
         }
 
-        return new ManamiManager(db);
+        return readFromCache()
+            .recoverWith(readFromDownloadUrl)
+            .mapAsync(writeToCache)
+            .map((db) => new ManamiManager(db))
+            .get();
     }
 
     private readonly entries: Record<string, AnimeOfflineDbEntry>;
