@@ -4,8 +4,7 @@ import path from "path";
 import fsp from "fs/promises";
 import fs from "fs";
 import { QBitorrentManager } from './qbitorrent.mjs';
-import { ManamiManager } from './manami/manami.manager.mjs';
-import { AnimeOfflineDbEntry } from './manami/manami.models.mjs';
+import { ManamiManager, AnimeOfflineDbEntry } from './manami/index.mjs';
 
 const MANAMI_CACHE_FILE = "./anime-offline-database.json";
 const MANAMI_DOWNLOAD_URL = "https://raw.githubusercontent.com/manami-project/anime-offline-database/master/anime-offline-database-minified.json";
@@ -90,7 +89,6 @@ async function main(): Promise<void> {
     console.log("initialized qbittorrent manager");
 
     const root = "/mnt/f/Weaboo/";
-
     const hashToAnime: Record<string, AnimeOfflineDbEntry> = {};
     
     for (const search of searches) {
