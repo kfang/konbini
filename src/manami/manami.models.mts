@@ -1,9 +1,3 @@
-import axios from "axios";
-import fs from "fs";
-
-const CACHE_FILE = "./anime-offline-database.json";
-const animeOfflineDbUrl = "https://raw.githubusercontent.com/manami-project/anime-offline-database/master/anime-offline-database-minified.json";
-
 export interface IAnimeOfflineDbEntry {
     readonly animeSeason: {
         readonly season: "SPRING" | "SUMMER" | "FALL" | "WINTER" | "UNDEFINED";
@@ -52,25 +46,4 @@ export class AnimeOfflineDbEntry {
     get folderName(): string {
         return `${this.title} [anidb3-${this.anidbId}]`;
     }
-}
-
-export async function getAnimeOfflineDb(): Promise<Record<string, AnimeOfflineDbEntry>> {
-    if (!fs.existsSync(CACHE_FILE)) {
-        const response = await axios.get<IAnimeOfflineDb>(animeOfflineDbUrl);
-        fs.writeFileSync(CACHE_FILE, JSON.stringify(response.data));
-    }
-
-    const db = JSON.parse(fs.readFileSync(CACHE_FILE).toString()) as IAnimeOfflineDb;
-
-    const entries: Record<string, AnimeOfflineDbEntry> = {};
-    for (const entry of db.data) {
-        const value = new AnimeOfflineDbEntry(entry);
-        const key = value.anidbId;
-
-        if (key) {
-            entries[key] = value;
-        }
-    }
-
-    return entries;
 }
