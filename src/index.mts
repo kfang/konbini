@@ -3,18 +3,22 @@ import nodeHtmlParser from 'node-html-parser';
 import path from "path";
 import fsp from "fs/promises";
 import fs from "fs";
-import { QBitorrentManager } from './qbitorrent.mjs';
 import { ManamiManager, AnimeOfflineDbEntry } from './manami/index.mjs';
+import { QBittorrentManager } from './qbittorrent/qbittorrent.manager.mjs';
 
 const MANAMI_CACHE_FILE = "./anime-offline-database.json";
 const MANAMI_DOWNLOAD_URL = "https://raw.githubusercontent.com/manami-project/anime-offline-database/master/anime-offline-database-minified.json";
+const QB_HOST = "http://localhost:8080"
+const QB_USER = "admin"
+const QB_PASS = "adminadmin"
 
 interface ISearchEntry {
     readonly anidbId: string;
     readonly query: string;
 }
 
-const searches: ISearchEntry[] = [
+const searches: ISearchEntry[] = [];
+const _searches: ISearchEntry[] = [
     {
         anidbId: "18289",
         query: "asw ramen akaneko 1080p hevc",
@@ -85,7 +89,11 @@ async function main(): Promise<void> {
     });
     console.log("initialized manami manager");
 
-    const qb = await QBitorrentManager.build("http://localhost:8080", "admin", "adminadmin");
+    const qb = await QBittorrentManager.build({ 
+        host: QB_HOST, 
+        user: QB_USER, 
+        pass: QB_PASS,
+    });
     console.log("initialized qbittorrent manager");
 
     const root = "/mnt/f/Weaboo/";
