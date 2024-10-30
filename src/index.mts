@@ -1,13 +1,13 @@
-import axios from 'axios';
-import nodeHtmlParser from 'node-html-parser';
 import path from "path";
 import fsp from "fs/promises";
 import fs from "fs";
 import { ManamiManager, AnimeOfflineDbEntry } from './manami/index.mjs';
 import { QBittorrentManager } from './qbittorrent/qbittorrent.manager.mjs';
+import { NyaaManager } from './nyaa/nyaa.manager.mjs';
 
 const MANAMI_CACHE_FILE = "./anime-offline-database.json";
 const MANAMI_DOWNLOAD_URL = "https://raw.githubusercontent.com/manami-project/anime-offline-database/master/anime-offline-database-minified.json";
+const NYAA_HOST = "https://nyaa.si";
 const QB_HOST = "http://localhost:8080"
 const QB_USER = "admin"
 const QB_PASS = "adminadmin"
@@ -49,39 +49,6 @@ const _searches: ISearchEntry[] = [
     }
 ];
 
-async function getNyaaResults(query: string): Promise<string[]> {
-    const results: string[] = [];
-
-    try {
-        const params = { c: "1_2", f: "0", q: query };
-        const res = await axios.get("https://nyaa.si/", { params });
-
-        const doc = nodeHtmlParser.parse(res.data);
-        const x = doc.querySelectorAll("table.torrent-list tbody tr")
-        
-        for (const row of x) {
-            const cells = row.getElementsByTagName("td");
-            
-            const name = cells[1]
-                .getElementsByTagName("a")
-                .filter((e) => e.getAttribute("class") !== "comments")[0]
-                .getAttribute("title");
-            
-            const [_, magnet] = cells[2].getElementsByTagName("a");
-
-            const magLink = magnet.getAttribute("href");
-            
-            if (magLink) {
-                results.push(magLink);
-            }
-        }
-    } catch (e) {
-        console.error(e);
-    }
-
-    return results;
-}
-
 async function main(): Promise<void> {
     const manamiManger = await ManamiManager.build({
         downloadUrl: MANAMI_DOWNLOAD_URL,
@@ -96,6 +63,10 @@ async function main(): Promise<void> {
     });
     console.log("initialized qbittorrent manager");
 
+    const nyaaManager = NyaaManager.build({
+        host: NYAA_HOST,
+    });
+
     const root = "/mnt/f/Weaboo/";
     const hashToAnime: Record<string, AnimeOfflineDbEntry> = {};
     
@@ -108,7 +79,7 @@ async function main(): Promise<void> {
 
         await fsp.mkdir(path.join(root, anime.folderName), { recursive: true });
 
-        const magnets = await getNyaaResults(search.query);
+        const magnets = await nyaaManager.getNyaaResults(search.query).get();
         await qb.addTorrents(magnets);
         magnets.forEach((magnet) => {
             const xt = new URL(magnet).searchParams.get("xt") ?? "";
