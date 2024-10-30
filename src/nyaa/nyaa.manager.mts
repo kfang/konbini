@@ -1,6 +1,7 @@
 import { TryAsync } from "@kfang/typescript-fp";
 import axios, { AxiosInstance } from "axios";
 import nodeHtmlParser from 'node-html-parser';
+import { NyaaResult } from "./nyaa.models.mjs";
 
 export interface INyaaManagerOpts {
     readonly host: string;
@@ -18,14 +19,15 @@ export class NyaaManager {
         this.getNyaaResults = this.getNyaaResults.bind(this);
     }
 
-    public getNyaaResults(query: string): TryAsync<string[]> {
+    public getNyaaResults(query: string): TryAsync<NyaaResult[]> {
         const params = { c: "1_2", f: "0", q: query };
 
         return TryAsync.of(this.client.get("/", { params }))
             .map((res) => nodeHtmlParser.parse(res.data))
             .map((doc) => doc.querySelectorAll("table.torrent-list tbody tr"))
             .map((rows) => {
-                const results: string[] = [];
+                const results: NyaaResult[] = [];
+                
                 for (const row of rows) {
                     const cells = row.getElementsByTagName("td");
                     
@@ -37,8 +39,8 @@ export class NyaaManager {
                     const [_, magnet] = cells[2].getElementsByTagName("a");
                     const magLink = magnet.getAttribute("href");
                     
-                    if (magLink) {
-                        results.push(magLink);
+                    if (name && magLink) {
+                        results.push(new NyaaResult({ name, magnet: magLink }));
                     }
                 }
                 return results;
