@@ -4,6 +4,7 @@ import fs from "fs";
 import { ManamiManager, AnimeOfflineDbEntry } from './manami/index.mjs';
 import { QBittorrentManager } from './qbittorrent/qbittorrent.manager.mjs';
 import { NyaaManager } from './nyaa/nyaa.manager.mjs';
+import winston from "winston";
 
 const MANAMI_CACHE_FILE = "./anime-offline-database.json";
 const MANAMI_DOWNLOAD_URL = "https://raw.githubusercontent.com/manami-project/anime-offline-database/master/anime-offline-database-minified.json";
@@ -11,6 +12,12 @@ const NYAA_HOST = "https://nyaa.si";
 const QB_HOST = "http://localhost:8080"
 const QB_USER = "admin"
 const QB_PASS = "adminadmin"
+    
+const logger = winston.createLogger({
+    level: "info",
+    format: winston.format.simple(),
+    transports: [new winston.transports.Console()],
+});
 
 interface ISearchEntry {
     readonly anidbId: string;
@@ -50,21 +57,23 @@ const _searches: ISearchEntry[] = [
 ];
 
 async function main(): Promise<void> {
+
     const manamiManger = await ManamiManager.build({
         downloadUrl: MANAMI_DOWNLOAD_URL,
         cacheFilePath: MANAMI_CACHE_FILE,
     });
-    console.log("initialized manami manager");
+    logger.info("initialized manami manager");
 
     const qb = await QBittorrentManager.build({ 
         host: QB_HOST, 
         user: QB_USER, 
         pass: QB_PASS,
     });
-    console.log("initialized qbittorrent manager");
+    logger.info("initialized qbittorrent manager");
 
     const nyaaManager = NyaaManager.build({
         host: NYAA_HOST,
+        logger: logger.child({ logger: { name: "nyaa" } }),
     });
 
     const root = "/mnt/f/Weaboo/";
@@ -94,11 +103,11 @@ async function main(): Promise<void> {
     const loop = async () => {
         for (const torrent of await qb.getTorrents()) {
             const progress = Math.floor(torrent.progress * 100) + "%";
-            console.log([progress, torrent.state, torrent.name].join("\t"));
+            logger.info([progress, torrent.state, torrent.name].join("\t"));
 
             const anime = hashToAnime[torrent.hash];
             if (!anime) {
-                console.warn("rogue torrent, no anime found for magnet: ", torrent.magnet_uri, torrent.hash);
+                logger.warn("rogue torrent, no anime found for magnet: ", torrent.magnet_uri, torrent.hash);
             }
 
             if (anime && torrent.progress === 1) {
@@ -107,20 +116,20 @@ async function main(): Promise<void> {
                     const src = path.join(root, "downloads", content.name);
                     const dst = path.join(root, anime.folderName, content.name);
                     if (!fs.existsSync(dst)) {
-                        console.log(`\tsrc: ${src}`);
-                        console.log(`\tdst: ${dst}`);
+                        logger.info(`\tsrc: ${src}`);
+                        logger.info(`\tdst: ${dst}`);
                         await fsp.copyFile(src, dst);
-                        console.log(`\t...done copying`);
+                        logger.info(`\t...done copying`);
                     }
                 }
             }
         }
 
-        console.log("----");
+        logger.info("----");
         setTimeout(loop, 10_000);
     };
 
     setTimeout(loop, 5000);
 }
 
-main().catch(console.error);
+main().catch(logger.error);

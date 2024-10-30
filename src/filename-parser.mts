@@ -86,5 +86,3 @@ function parse(filename: string): IFilenameInfo {
     return results;
 }
 
-const info = parse("[Erai-raws] Isekai Suicide Squad - 08 [1080p][HEVC][Multiple Subtitle][A8687A1B].mkv");
-console.log(info);

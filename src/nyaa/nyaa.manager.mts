@@ -2,20 +2,25 @@ import { TryAsync } from "@kfang/typescript-fp";
 import axios, { AxiosInstance } from "axios";
 import nodeHtmlParser from 'node-html-parser';
 import { NyaaResult } from "./nyaa.models.mjs";
+import { Logger } from "winston";
 
 export interface INyaaManagerOpts {
     readonly host: string;
+    readonly logger: Logger;
 }
 
 export class NyaaManager {
 
     public static build(opts: INyaaManagerOpts): NyaaManager {
         const client = axios.create({ baseURL: opts.host });
-        return new NyaaManager(client);
+        return new NyaaManager(client, opts.logger);
     }
 
 
-    private constructor(private readonly client: AxiosInstance) {
+    private constructor(
+        private readonly client: AxiosInstance,
+        private readonly logger: Logger,
+    ) {
         this.getNyaaResults = this.getNyaaResults.bind(this);
     }
 
@@ -47,7 +52,7 @@ export class NyaaManager {
             })
             .recover((error) => {
                 // TODO: do something about this error
-                console.error(error);
+                this.logger.error(error);
                 return [];
             });
     }
