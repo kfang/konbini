@@ -79,7 +79,8 @@ async function main(): Promise<void> {
 
         await fsp.mkdir(path.join(root, anime.folderName), { recursive: true });
 
-        const magnets = await nyaaManager.getNyaaResults(search.query).get();
+        const results = await nyaaManager.getNyaaResults(search.query).get();
+        const magnets = results.map((r) => r.magnet);
         await qb.addTorrents(magnets);
         magnets.forEach((magnet) => {
             const xt = new URL(magnet).searchParams.get("xt") ?? "";
