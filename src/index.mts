@@ -73,6 +73,7 @@ async function main(): Promise<void> {
 
     const nyaaManager = NyaaManager.build({
         host: NYAA_HOST,
+        logger: logger.child({ logger: { name: "nyaa" } }),
     });
 
     const root = "/mnt/f/Weaboo/";
